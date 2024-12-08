@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Экономическая Стратегия</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-wrapper">
+        <header class="game-header">
+            <h1>Экономическая Стратегия</h1>
+            <div class="global-stats">
+                <div class="stat-panel">
+                    <div class="stat-item">
+                        <span class="stat-label"><span class="resource-icon">💰</span> Золото</span>
+                        <span id="goldAmount" class="stat-value">100</span>
+                        <span id="goldChange" class="resource-change"></span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label"><span class="resource-icon">🍲</span> Еда</span>
+                        <span id="foodAmount" class="stat-value">10</span>
+                        <span id="foodChange" class="resource-change"></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="game-container">
+            <div class="sidebar">
+                <div class="resources-panel">
+                    <h2>Ресурсы</h2>
+                    <div id="resourceDisplay">
+                        <div class="resource-item">
+                            <span><span class="resource-icon">💰</span> Золото</span>
+                            <span id="goldAmount">0</span>
+                            <span id="goldChange" class="resource-change"></span>
+                        </div>
+                        <div class="resource-item">
+                            <span><span class="resource-icon">🌾</span> Пшено</span>
+                            <span id="wheatAmount">0</span>
+                            <span id="wheatChange" class="resource-change"></span>
+                        </div>
+                        <div class="resource-item">
+                            <span><span class="resource-icon">🍲</span> Еда</span>
+                            <span id="foodAmount">0</span>
+                            <span id="foodChange" class="resource-change"></span>
+                        </div>
+                        <div class="resource-item">
+                            <span><span class="resource-icon">🌲</span> Дерево</span>
+                            <span id="woodAmount">0</span>
+                            <span id="woodChange" class="resource-change"></span>
+                        </div>
+                        <div class="resource-item">
+                            <span><span class="resource-icon">🪨</span> Камень</span>
+                            <span id="stoneAmount">0</span>
+                            <span id="stoneChange" class="resource-change"></span>
+                        </div>
+                        <div class="resource-item">
+                            <span><span class="resource-icon">🔧</span> Железо</span>
+                            <span id="ironAmount">0</span>
+                            <span id="ironChange" class="resource-change"></span>
+                        </div>
+                        <div class="resource-item">
+                            <span><span class="resource-icon">⚒️</span> Уголь</span>
+                            <span id="coalAmount">0</span>
+                            <span id="coalChange" class="resource-change"></span>
+                        </div>
+                        <div class="resource-item">
+                            <span><span class="resource-icon">🐾</span> Шкура</span>
+                            <span id="furAmount">0</span>
+                            <span id="furChange" class="resource-change"></span>
+                        </div>
+                        <div class="resource-item">
+                            <span><span class="resource-icon">🧥</span> Обработанная шкура</span>
+                            <span id="processedFurAmount">0</span>
+                            <span id="processedFurChange" class="resource-change"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="labor-panel">
+                    <h2>Трудовые силы</h2>
+                    <div class="labor-stats">
+                        <div class="labor-item">
+                            <span>Доступные</span>
+                            <span id="availableLaborCount">1</span>
+                        </div>
+                        <div class="labor-item">
+                            <span>В ожидании</span>
+                            <span id="waitingLaborCount">0</span>
+                        </div>
+                    </div>
+                    <button id="hireLaborBtn">Нанять рабочего за 10💰</button>
+                </div>
+
+                
+            </div>
+
+            <div class="main-content">
+                <div class="production-panel">
+                    <div class="panel-header">
+                        <h2>Производство</h2>
+                        <button id="toggleProductionBtn" class="toggle-panel-btn">
+                            <span class="toggle-icon">▼</span>
+                        </button>
+                    </div>
+                    <div id="productionContent" class="panel-content">
+                        <div class="production-grid">
+                            <div class="production-card">
+                                <h3>Охота</h3>
+                                <div class="production-details">
+                                    <p><span class="resource-icon">👥</span> Трудовые силы: 1</p>
+                                    <p><span class="resource-icon">🍲</span> Производство: 0.1 еды/сек</p>
+                                </div>
+                                <button id="createHunterBtn">Нанять охотников</button>
+                                <button id="processFurBtn">Обработать
+                                    <div class="processing-info">
+                                        Обработка: 1 шкура + 1 🌲 дерево
+                                    </div>
+                                </button>
+                                <div id="hunterContainer" class="production-list"></div>
+                            </div>
+                            <div class="production-card">
+                                <h3>Пшеничное поле</h3>
+                                <div class="production-details">
+                                    <p><span class="resource-icon">👥</span> Трудовые силы: 1</p>
+                                    <p><span class="resource-icon">🍲</span> Потребление еды: 0.5/сек</p>
+                                    <p><span class="resource-icon">🌾</span> Производство: 0.1 пшена/сек</p>
+                                </div>
+                                <button id="createWheatFieldBtn">Создать поле</button>
+                                <div id="wheatFieldsContainer" class="production-list"></div>
+                            </div>
+
+                            <div class="production-card">
+                                <h3>Лесозаготовка</h3>
+                                <div class="production-details">
+                                    <p><span class="resource-icon">👥</span> Трудовые силы: 1</p>
+                                    <p><span class="resource-icon">🍲</span> Потребление еды: 0.6/сек</p>
+                                    <p><span class="resource-icon">🌾</span> Потребление пшена: 0.2/сек</p>
+                                    <p><span class="resource-icon">🌲</span> Производство: 0.1 дерева/сек</p>
+                                </div>
+                                <button id="createWoodcutterBtn">Создать лесозаготовку</button>
+                                <div id="woodcutterContainer" class="production-list"></div>
+                            </div>
+
+                            <div class="production-card">
+                                <h3>Каменоломня</h3>
+                                <div class="production-details">
+                                    <p><span class="resource-icon">👥</span> Трудовые силы: 1</p>
+                                    <p><span class="resource-icon">🍲</span> Потребление еды: 0.7/сек</p>
+                                    <p><span class="resource-icon">🌲</span> Потребление дерева: 0.5/сек</p>
+                                    <p><span class="resource-icon">🌾</span> Потребление пшена: 1/сек</p>
+                                    <p><span class="resource-icon">🪨</span> Производство: 0.1 камня/сек</p>
+                                </div>
+                                <button id="createStoneQuarryBtn">Создать карьер</button>
+                                <div id="stoneQuarryContainer" class="production-list"></div>
+                            </div>
+
+                            <div class="production-card">
+                                <h3>Рудник</h3>
+                                <div class="production-details">
+                                    <p><span class="resource-icon">👥</span> Трудовые силы: 1</p>
+                                    <p><span class="resource-icon">🍲</span> Потребление еды: 0.8/сек</p>
+                                    <p><span class="resource-icon">🌲</span> Потребление дерева: 0.3/сек</p>
+                                    <p><span class="resource-icon">🪨</span> Потребление камня: 0.5/сек</p>
+                                    <p><span class="resource-icon">🔧</span> Производство: 0.1 железа/сек</p>
+                                </div>
+                                <button id="createIronMineBtn">Открыть рудник</button>
+                                <div id="ironMineContainer" class="production-list"></div>
+                            </div>
+
+                            <div class="production-card">
+                                <h3>Угольная шахта</h3>
+                                <div class="production-details">
+                                    <p><span class="resource-icon">👥</span> Трудовые силы: 1</p>
+                                    <p><span class="resource-icon">🍲</span> Потребление еды: 0.9/сек</p>
+                                    <p><span class="resource-icon">🌲</span> Потребление дерева: 0.4/сек</p>
+                                    <p><span class="resource-icon">🪨</span> Потребление камня: 0.6/сек</p>
+                                    <p><span class="resource-icon">🔧</span> Потребление железа: 0.2/сек</p>
+                                    <p><span class="resource-icon">⚒️</span> Производство: 0.1 угля/сек</p>
+                                </div>
+                                <button id="createCoalMineBtn">Открыть угольную шахту</button>
+                                <div id="coalMineContainer" class="production-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="market-panel">
+                    <h2>Рынок</h2>
+                    <div class="market-selling">
+                        <div class="market-resource">
+                            <div class="resource-info">
+                                <span class="resource-icon">🌾</span>
+                                <span id="sellWheatAmount">0</span>
+                            </div>
+                            <div class="resource-price">
+                                <span>1 пшено = </span>
+                                <span id="wheatPricePerUnit">0.1</span>
+                                <span>💰</span>
+                            </div>
+                            <button id="sellWheatBtn">Продать</button>
+                        </div>
+                        <div class="market-resource">
+                            <div class="resource-info">
+                                <span class="resource-icon">🌲</span>
+                                <span id="sellWoodAmount">0</span>
+                            </div>
+                            <div class="resource-price">
+                                <span>1 дерево = </span>
+                                <span id="woodPricePerUnit">0.2</span>
+                                <span>💰</span>
+                            </div>
+                            <button id="sellWoodBtn">Продать</button>
+                        </div>
+                        <div class="market-resource">
+                            <div class="resource-info">
+                                <span class="resource-icon">🪨</span>
+                                <span id="sellStoneAmount">0</span>
+                            </div>
+                            <div class="resource-price">
+                                <span>1 камень = </span>
+                                <span id="stonePricePerUnit">5</span>
+                                <span>💰</span>
+                            </div>
+                            <button id="sellStoneBtn">Продать</button>
+                        </div>
+                        <div class="market-resource">
+                            <div class="resource-info">
+                                <span class="resource-icon">🔧</span>
+                                <span id="sellIronAmount">0</span>
+                            </div>
+                            <div class="resource-price">
+                                <span>1 железо = </span>
+                                <span id="ironPricePerUnit">10</span>
+                                <span>💰</span>
+                            </div>
+                            <button id="sellIronBtn">Продать</button>
+                        </div>
+                        <div class="market-resource">
+                            <div class="resource-info">
+                                <span class="resource-icon">⚒️</span>
+                                <span id="sellCoalAmount">0</span>
+                            </div>
+                            <div class="resource-price">
+                                <span>1 уголь = </span>
+                                <span id="coalPricePerUnit">15</span>
+                                <span>💰</span>
+                            </div>
+                            <button id="sellCoalBtn">Продать</button>
+                        </div>
+                        <div class="market-resource">
+                            <div class="resource-info">
+                                <span class="resource-icon">🐾</span>
+                                <span id="sellFurAmount">0</span>
+                            </div>
+                            <div class="resource-price">
+                                <span>1 шкура = </span>
+                                <span id="furPricePerUnit">0.3</span>
+                                <span>💰</span>
+                            </div>
+                            <button id="sellFurBtn">Продать</button>
+                        </div>
+                        <div class="market-resource">
+                            <div class="resource-info">
+                                <span class="resource-icon">🧥</span>
+                                <span id="sellProcessedFurAmount">0</span>
+                            </div>
+                            <div class="resource-price">
+                                <span>1 обр. шкура = </span>
+                                <span id="processedFurPricePerUnit">15</span>
+                                <span>💰</span>
+                            </div>
+                            <button id="sellProcessedFurBtn">Продать</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="upgrades-panel">
+                    <h2>Прокачки</h2>
+                    <div class="upgrade-tabs">
+                        <button class="tab-button active" data-tab="labor-upgrades">Рабочая сила</button>
+                        <button class="tab-button" data-tab="production-upgrades">Производство</button>
+                    </div>
+                    <div id="labor-upgrades" class="upgrade-content active">
+                        <h3>Эффективность рабочих</h3>
+                        <div class="upgrade-list">
+                            <div class="upgrade-item" id="laborEfficiency1">
+                                <div class="upgrade-info">
+                                    <h4>Уровень 1: Оптимизация питания</h4>
+                                    <p>Рабочие требуют на 10% меньше еды</p>
+                                    <div class="upgrade-cost">
+                                        <span class="resource-icon">🌾</span> 
+                                        <span>20 пшена</span>
+                                    </div>
+                                </div>
+                                <button id="buyLaborEfficiency1Btn">Купить</button>
+                            </div>
+                            <div class="upgrade-item" id="laborEfficiency2">
+                                <div class="upgrade-info">
+                                    <h4>Уровень 2: Полевые эксперты</h4>
+                                    <p>Рабочие на полях производят +5% ресурсов</p>
+                                    <div class="upgrade-cost">
+                                        <span class="resource-icon">🌾</span> 
+                                        <span>40 пшена</span>
+                                    </div>
+                                </div>
+                                <button id="buyLaborEfficiency2Btn">Купить</button>
+                            </div>
+                            <div class="upgrade-item" id="laborEfficiency3">
+                                <div class="upgrade-info">
+                                    <h4>Уровень 3: Профессиональная подготовка</h4>
+                                    <p>Рабочие потребляют на 15% меньше еды</p>
+                                    <div class="upgrade-cost">
+                                        <span class="resource-icon">🌾</span> 
+                                        <span>60 пшена</span>
+                                    </div>
+                                </div>
+                                <button id="buyLaborEfficiency3Btn">Купить</button>
+                            </div>
+                            <div class="upgrade-item" id="laborEfficiency4">
+                                <div class="upgrade-info">
+                                    <h4>Уровень 4: Мастера производства</h4>
+                                    <p>Рабочие производят +10% ресурсов</p>
+                                    <div class="upgrade-cost">
+                                        <span class="resource-icon">🌾</span> 
+                                        <span>80 пшена</span>
+                                    </div>
+                                </div>
+                                <button id="buyLaborEfficiency4Btn">Купить</button>
+                            </div>
+                            <div class="upgrade-item" id="laborEfficiency5">
+                                <div class="upgrade-info">
+                                    <h4>Уровень 5: Научная организация труда</h4>
+                                    <p>Рабочие потребляют на 20% меньше еды и производят +15% ресурсов</p>
+                                    <div class="upgrade-cost">
+                                        <span class="resource-icon">🌾</span> 
+                                        <span>100 пшена</span>
+                                    </div>
+                                </div>
+                                <button id="buyLaborEfficiency5Btn">Купить</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="production-upgrades" class="upgrade-content">
+                        <h3>Производственные улучшения</h3>
+                        <p>Скоро будут добавлены...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

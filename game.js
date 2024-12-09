@@ -647,7 +647,6 @@ class EconomicGame {
     }
 
     sellFur() {
-        // Этот метод больше не используется
         return;
     }
 

@@ -1,46 +1,16 @@
 class EconomicGame {
     constructor() {
-        this.resources = {
-            gold: 100,
-            wheat: 0,
-            food: 10,
-            wood: 0,
-            stone: 0,
-            iron: 0,
-            coal: 0,
-            fur: 0,
-            processedFur: 0  // Новый ресурс - обработанная шкура
-        };
-
+        this.resourceManager = new ResourceManager();
         this.foodConsumption = {
             wheat: 0.5,
             wood: 0.6,
             stone: 0.7,
             iron: 0.8,
             coal: 0.9,
-            hunting: -0.1  // Negative because it produces food
+            hunting: -0.1,  // Negative because it produces food
+            silver: 1,
+            gold: 1
         };
-
-        this.marketStats = {
-            totalWheatSold: 0,
-            wheatPriceMultiplier: 1
-        };
-
-        this.marketRates = {
-            wheat: 0.1,   
-            wood: 0.2,    
-            stone: 5,   
-            iron: 10,
-            coal: 15,     
-            fur: 0.3,        
-            processedFur: 15  
-        };
-
-        this.wheatPriceThresholds = [
-            { threshold: 1000, multiplier: 0.2 },
-            { threshold: 5000, multiplier: 0.1 },
-            { threshold: 10000, multiplier: 0.05 }
-        ];
 
         this.labor = {
             available: 1,
@@ -53,6 +23,8 @@ class EconomicGame {
         this.hunters = [];
         this.ironMines = [];
         this.coalMines = [];
+        this.silverMines = [];
+        this.goldMines = [];
 
         this.upgrades = {
             laborEfficiency: {
@@ -79,6 +51,8 @@ class EconomicGame {
         document.getElementById('createIronMineBtn').addEventListener('click', () => this.createIronMine());
         document.getElementById('createCoalMineBtn').addEventListener('click', () => this.createCoalMine());
         
+        document.getElementById('createSilverMineBtn').addEventListener('click', () => this.createSilverMine());
+        
         // Market selling buttons
         document.getElementById('sellWheatBtn').addEventListener('click', () => this.sellResource('wheat'));
         document.getElementById('sellWoodBtn').addEventListener('click', () => this.sellResource('wood'));
@@ -87,6 +61,8 @@ class EconomicGame {
         document.getElementById('sellCoalBtn').addEventListener('click', () => this.sellResource('coal'));
         document.getElementById('sellFurBtn').addEventListener('click', () => this.sellRawFur());
         document.getElementById('sellProcessedFurBtn').addEventListener('click', () => this.sellProcessedFur());
+
+        document.getElementById('sellSilverBtn').addEventListener('click', () => this.sellResource('silver'));
 
         // Add production panel toggle listener
         const toggleProductionBtn = document.getElementById('toggleProductionBtn');
@@ -110,7 +86,9 @@ class EconomicGame {
         document.getElementById('buyLaborEfficiency4Btn').addEventListener('click', () => this.buyUpgrade('laborEfficiency', 4));
         document.getElementById('buyLaborEfficiency5Btn').addEventListener('click', () => this.buyUpgrade('laborEfficiency', 5));
 
-        document.getElementById('processFurBtn').addEventListener('click', () => this.processFurManually());
+        document.getElementById('processFurBtn').addEventListener('click', () => this.processFur());
+
+        document.getElementById('createGoldMineBtn').addEventListener('click', () => this.createGoldMine());
     }
 
     initializeUpgradeTabs() {
@@ -132,8 +110,8 @@ class EconomicGame {
 
     hireLaborForce() {
         const hireCost = 10;
-        if (this.resources.gold >= hireCost) {
-            this.resources.gold -= hireCost;
+        if (this.resourceManager.canAfford('gold', hireCost)) {
+            this.resourceManager.modifyResourceAmount('gold', -hireCost);
             this.labor.available++;
             this.updateDisplay();
         } else {
@@ -159,9 +137,9 @@ class EconomicGame {
     }
 
     createWoodcutter() {
-        if (this.labor.available > 0 && this.resources.wheat >= 0.2) {
+        if (this.labor.available > 0 && this.resourceManager.canAfford('wheat', 0.2)) {
             this.labor.available--;
-            this.resources.wheat -= 0.2;
+            this.resourceManager.modifyResourceAmount('wheat', -0.2);
             const woodcutter = {
                 id: this.woodcutters.length,
                 active: true,
@@ -177,10 +155,10 @@ class EconomicGame {
     }
 
     createStoneQuarry() {
-        if (this.labor.available > 0 && this.resources.wood >= 0.5 && this.resources.wheat >= 1) {
+        if (this.labor.available > 0 && this.resourceManager.canAfford('wood', 0.5) && this.resourceManager.canAfford('wheat', 1)) {
             this.labor.available--;
-            this.resources.wood -= 0.5;
-            this.resources.wheat -= 1;
+            this.resourceManager.modifyResourceAmount('wood', -0.5);
+            this.resourceManager.modifyResourceAmount('wheat', -1);
             const stoneQuarry = {
                 id: this.stoneQuarries.length,
                 active: true,
@@ -214,12 +192,12 @@ class EconomicGame {
 
     createIronMine() {
         // Check if there are available labor and enough resources
-        if (this.labor.available > 0 && this.resources.wood >= 0.3 && this.resources.stone >= 0.5) {
+        if (this.labor.available > 0 && this.resourceManager.canAfford('wood', 0.3) && this.resourceManager.canAfford('stone', 0.5)) {
             const ironMineId = this.ironMines.length + 1;
             
             // Consume resources and labor
-            this.resources.wood -= 0.3;
-            this.resources.stone -= 0.5;
+            this.resourceManager.modifyResourceAmount('wood', -0.3);
+            this.resourceManager.modifyResourceAmount('stone', -0.5);
             this.labor.available--;
 
             // Create iron mine
@@ -237,16 +215,16 @@ class EconomicGame {
     createCoalMine() {
         // Check if there are available labor and enough resources
         if (this.labor.available > 0 && 
-            this.resources.wood >= 0.4 && 
-            this.resources.stone >= 0.6 && 
-            this.resources.iron >= 0.2) {
+            this.resourceManager.canAfford('wood', 0.4) && 
+            this.resourceManager.canAfford('stone', 0.6) && 
+            this.resourceManager.canAfford('iron', 0.2)) {
             
             const coalMineId = this.coalMines.length + 1;
             
             // Consume resources and labor
-            this.resources.wood -= 0.4;
-            this.resources.stone -= 0.6;
-            this.resources.iron -= 0.2;
+            this.resourceManager.modifyResourceAmount('wood', -0.4);
+            this.resourceManager.modifyResourceAmount('stone', -0.6);
+            this.resourceManager.modifyResourceAmount('iron', -0.2);
             this.labor.available--;
 
             // Create coal mine
@@ -254,12 +232,47 @@ class EconomicGame {
                 id: coalMineId,
                 productivity: 0.1  // 0.1 coal per second
             });
-
+            
             // Update displays
             this.updateCoalMineDisplay();
             this.updateDisplay();
         }
     }
+    createSilverMine() {
+                if (this.labor.available > 0 && 
+                    this.resourceManager.canAfford('wood', 0.5) && 
+                    this.resourceManager.canAfford('stone', 0.3)) {
+                        const silverMineId = this.silverMines.length + 1;
+                        
+                        this.resourceManager.modifyResourceAmount('wood', -0.5);
+                        this.resourceManager.modifyResourceAmount('stone', -0.3);
+                        this.labor.available--;
+
+                        this.silverMines.push({
+                            id: silverMineId,
+                            productivity: 0.1  // 0.1 silver per second
+                        });
+                        this.updateSilverMineDisplay();
+                        this.updateDisplay();
+                    } else {
+                        alert('Недостаточно ресурсов или рабочих для создания серебряной шахты!');
+                    }
+        }
+
+    
+    updateSilverMineDisplay() {
+        const container = document.getElementById('silverMineContainer');
+        container.innerHTML = ''; 
+        this.silverMines.forEach(mine => {
+            const mineElement = document.createElement('div');
+            mineElement.innerHTML = `
+                Серебряная шахта #${mine.id} 
+                <button onclick="game.removeSilverMine(${mine.id})">Закрыть</button>
+            `;
+            container.appendChild(mineElement);
+        });
+    }
+    
 
     updateWheatFieldDisplay() {
         const container = document.getElementById('wheatFieldsContainer');
@@ -392,6 +405,15 @@ class EconomicGame {
             this.updateDisplay();
         }
     }
+    removeSilverMine(mineId) {
+        const index = this.silverMines.findIndex(mine => mine.id === mineId);
+        if (index !== -1) {
+            this.silverMines.splice(index, 1);
+            this.labor.available++;
+            this.updateSilverMineDisplay();
+            this.updateDisplay();
+        }
+    }
 
     buyUpgrade(upgradeType, level) {
         const upgrade = this.upgrades[upgradeType];
@@ -405,13 +427,13 @@ class EconomicGame {
         const cost = upgrade.costs[level - 1];
         
         // Проверяем достаточно ли пшена
-        if (this.resources.wheat < cost) {
+        if (!this.resourceManager.canAfford('wheat', cost)) {
             console.log('Недостаточно пшена для покупки');
             return;
         }
 
         // Списываем пшено
-        this.resources.wheat -= cost;
+        this.resourceManager.modifyResourceAmount('wheat', -cost);
 
         // Обновляем уровень прокачки
         upgrade.level = level;
@@ -419,22 +441,23 @@ class EconomicGame {
         // Применяем эффекты прокачки
         switch(level) {
             case 1:
-                upgrade.foodReductionMultiplier = 0.9;  // 10% меньше еды
+                upgrade.foodReductionMultiplier = 0.65;  // 35% меньше еды
                 break;
             case 2:
-                upgrade.productionMultiplier = 1.05;  // +5% к производству
+                upgrade.productionMultiplier *= 1.2;  // +20% к производству
                 break;
             case 3:
-                upgrade.foodReductionMultiplier = 0.85;  // 15% меньше еды
+                upgrade.productionMultiplier *= 1.5;  // +50% к производству
                 break;
             case 4:
-                upgrade.productionMultiplier = 1.1;  // +10% к производству
+                upgrade.productionMultiplier *= 1.45;  // +45% к производству
                 break;
             case 5:
-                upgrade.foodReductionMultiplier = 0.8;  // 20% меньше еды
-                upgrade.productionMultiplier = 1.15;  // +15% к производству
+                upgrade.foodReductionMultiplier = -0.8;  // Уменьшение потребления еды до -0.8 в сек
+                upgrade.productionMultiplier *= 1.25;  // +25% к производству
                 break;
         }
+        console.log(`Уровень: ${level}, Множитель производства: ${upgrade.productionMultiplier}`);
 
         // Обновляем отображение
         this.updateDisplay();
@@ -453,7 +476,7 @@ class EconomicGame {
                 btn.textContent = 'Куплено';
                 item.classList.add('purchased');
             } else if (laborUpgrade.level === i - 1) {
-                btn.disabled = this.resources.wheat < laborUpgrade.costs[i - 1];
+                btn.disabled = !this.resourceManager.canAfford('wheat', laborUpgrade.costs[i - 1]);
             } else {
                 btn.disabled = true;
             }
@@ -463,15 +486,8 @@ class EconomicGame {
     startResourceGeneration() {
         setInterval(() => {
             const upgrade = this.upgrades.laborEfficiency;
-            
-            // Модифицируем потребление еды с учетом прокачек
             let totalFoodConsumption = 0;
             let totalFoodProduction = 0;
-
-            // Охота
-            this.hunters.forEach(() => {
-                totalFoodProduction -= this.foodConsumption.hunting;
-            });
 
             // Пшеничные поля
             this.wheatFields.forEach(() => {
@@ -495,8 +511,26 @@ class EconomicGame {
                 totalFoodConsumption += this.foodConsumption.coal * upgrade.foodReductionMultiplier;
             });
 
+            this.silverMines.forEach(() => {
+                totalFoodConsumption += this.foodConsumption.silver * upgrade.foodReductionMultiplier;
+            });
+
+            this.goldMines.forEach(() => {
+                totalFoodConsumption += this.foodConsumption.gold * upgrade.foodReductionMultiplier;
+            });
+
+            console.log(`Общее потребление еды: ${totalFoodConsumption}, Множитель уменьшения еды: ${upgrade.foodReductionMultiplier}`);
+
             // Обновляем ресурсы с учетом прокачек
-            this.resources.food += totalFoodProduction - totalFoodConsumption;
+            this.resourceManager.modifyResourceAmount('food', totalFoodProduction - totalFoodConsumption);
+
+            // Охота
+            this.hunters.forEach(() => {
+                totalFoodProduction -= this.foodConsumption.hunting;
+            });
+
+            // Обновляем ресурсы с учетом прокачек
+            this.resourceManager.modifyResourceAmount('food', totalFoodProduction - totalFoodConsumption);
 
             this.generateWheatResources();
             this.generateWoodResources();
@@ -504,7 +538,8 @@ class EconomicGame {
             this.generateIronResources();
             this.generateCoalResources();
             this.generateFurResources();
-            this.processFur();
+            this.generateSilverResources();
+            this.generateGoldResources();
 
             this.updateDisplay();
             this.checkFoodDepletion();
@@ -516,131 +551,117 @@ class EconomicGame {
     generateWheatResources() {
         const upgrade = this.upgrades.laborEfficiency;
         this.wheatFields.forEach(field => {
-            this.resources.wheat += field.wheatPerSecond * upgrade.productionMultiplier;
+            const production = field.wheatPerSecond * upgrade.productionMultiplier;
+            console.log(`Рабочий #${field.id}: Производство = ${production}`);
+            this.resourceManager.modifyResourceAmount('wheat', production);
         });
     }
 
     generateWoodResources() {
+        const upgrade = this.upgrades.laborEfficiency;
         this.woodcutters.forEach(woodcutter => {
-            if (this.resources.wheat >= woodcutter.wheatCost) {
-                this.resources.wheat -= woodcutter.wheatCost;
-                this.resources.wood += woodcutter.woodPerSecond;
+            if (this.resourceManager.canAfford('wheat', woodcutter.wheatCost)) {
+                this.resourceManager.modifyResourceAmount('wheat', -woodcutter.wheatCost);
+                this.resourceManager.modifyResourceAmount('wood', woodcutter.woodPerSecond * upgrade.productionMultiplier);
             }
         });
     }
 
     generateStoneResources() {
+        const upgrade = this.upgrades.laborEfficiency;
         this.stoneQuarries.forEach(quarry => {
-            if (this.resources.wood >= quarry.woodCost && this.resources.wheat >= quarry.wheatCost) {
-                this.resources.wood -= quarry.woodCost;
-                this.resources.wheat -= quarry.wheatCost;
-                this.resources.stone += quarry.stonePerSecond;
+            if (this.resourceManager.canAfford('wood', quarry.woodCost) && this.resourceManager.canAfford('wheat', quarry.wheatCost)) {
+                this.resourceManager.modifyResourceAmount('wood', -quarry.woodCost);
+                this.resourceManager.modifyResourceAmount('wheat', -quarry.wheatCost);
+                this.resourceManager.modifyResourceAmount('stone', quarry.stonePerSecond * upgrade.productionMultiplier);
             }
         });
     }
 
     generateIronResources() {
+        const upgrade = this.upgrades.laborEfficiency;
         this.ironMines.forEach(mine => {
-            this.resources.iron += mine.productivity;
+            const production = mine.productivity * upgrade.productionMultiplier;
+            this.resourceManager.modifyResourceAmount('iron', production);
         });
     }
 
     generateCoalResources() {
+        const upgrade = this.upgrades.laborEfficiency;
         this.coalMines.forEach(mine => {
-            this.resources.coal += mine.productivity;
+            const production = mine.productivity * upgrade.productionMultiplier;
+            this.resourceManager.modifyResourceAmount('coal', production);
         });
     }
 
     generateFurResources() {
         this.hunters.forEach(hunter => {
             if (Math.random() < 0.02) {
-                this.resources.fur += 1;
+                this.resourceManager.modifyResourceAmount('fur', 1);
             }
         });
     }
+    generateSilverResources() {
+        const upgrade = this.upgrades.laborEfficiency;
+        this.silverMines.forEach(mine => {
+            const production = mine.productivity * upgrade.productionMultiplier;
+            this.resourceManager.modifyResourceAmount('silver', production);
+        });
+    }
+    
 
     processFur() {
-        console.log('processFur called');
-        console.log('Fur:', this.resources.fur);
-        console.log('Wood:', this.resources.wood);
-
-        // Требуется 1 дерево для обработки 1 шкуры
-        if (this.resources.fur > 0 && this.resources.wood >= 1) {
-            console.log('Processing fur');
-            this.resources.fur -= 1;
-            this.resources.wood -= 1;
-            this.resources.processedFur += 1;
-            
-            this.updateDisplay();
+        if (this.resourceManager.canAfford('fur', 1) && this.resourceManager.canAfford('wood', 1)) {
+            this.resourceManager.modifyResourceAmount('fur', -1);
+            this.resourceManager.modifyResourceAmount('wood', -1);
+            this.resourceManager.modifyResourceAmount('processedFur', 1);
+            console.log('Manually processed fur');
+            this.updateResourceDisplay();
         } else {
             console.log('Cannot process fur: not enough resources');
+            alert('Недостаточно шкур или дерева для обработки!');
         }
     }
 
-    processFurManually() {
-        console.log('processFurManually called');
-        if (this.resources.fur > 0 && this.resources.wood >= 1) {
-            this.resources.fur -= 1;
-            this.resources.wood -= 1;
-            this.resources.processedFur += 1;
-            
-            this.updateDisplay();
-        }
-    }
-
-    sellResource(resourceType) {
-        const amount = this.resources[resourceType];
+    sellResource(resourceName) {
+        const amount = this.resourceManager.getResourceAmount(resourceName);
         if (amount > 0) {
-            let rate = this.marketRates[resourceType];
-            let goldEarned = 0;
-
-            if (resourceType === 'wheat') {
-                // Update total wheat sold and adjust price
-                this.marketStats.totalWheatSold += amount;
-                this.updateWheatPrice();
-                rate = this.marketRates.wheat;
-            }
-
-            goldEarned = amount * rate;
-            
-            // Sell all of the resource
-            this.resources[resourceType] = 0;
-            this.resources.gold += goldEarned;
+            const goldEarned = this.resourceManager.sellResource(resourceName, amount);
             
             // Notification with dynamic pricing info
-            let priceInfo = resourceType === 'wheat' 
-                ? ` (текущий курс: ${(1/rate).toFixed(2)} пшена = 1 золото)` 
+            let priceInfo = resourceName === 'wheat' 
+                ? ` (текущий курс: ${(1/this.resourceManager.resourceConfigs[resourceName].marketRate).toFixed(2)} ${resourceName} = 1 золото)` 
                 : '';
             
-            alert(`Продано ${amount.toFixed(2)} ${this.getResourceName(resourceType)} по курсу ${rate.toFixed(4)} золота за единицу. Получено ${goldEarned.toFixed(2)} золота${priceInfo}`);
+            alert(`Продано ${amount.toFixed(2)} ${resourceName} по курсу ${this.resourceManager.resourceConfigs[resourceName].marketRate.toFixed(4)} золота за единицу. Получено ${goldEarned.toFixed(2)} золота${priceInfo}`);
             
             this.updateDisplay();
         } else {
-            alert(`Нет ${this.getResourceName(resourceType)} для продажи`);
+            alert(`Нет ${resourceName} для продажи`);
         }
     }
 
     sellRawFur() {
-        const furToSell = Math.floor(this.resources.fur);
+        const furToSell = Math.floor(this.resourceManager.getResourceAmount('fur'));
         if (furToSell > 0) {
-            const furPrice = this.marketRates.fur;
+            const furPrice = this.resourceManager.resourceConfigs['fur'].marketRate;
             const goldEarned = furToSell * furPrice;
             
-            this.resources.gold += goldEarned;
-            this.resources.fur -= furToSell;
+            this.resourceManager.modifyResourceAmount('gold', goldEarned);
+            this.resourceManager.modifyResourceAmount('fur', -furToSell);
             
             this.updateDisplay();
         }
     }
 
     sellProcessedFur() {
-        const processedFurToSell = Math.floor(this.resources.processedFur);
+        const processedFurToSell = Math.floor(this.resourceManager.getResourceAmount('processedFur'));
         if (processedFurToSell > 0) {
-            const processedFurPrice = this.marketRates.processedFur;
+            const processedFurPrice = this.resourceManager.resourceConfigs['processedFur'].marketRate;
             const goldEarned = processedFurToSell * processedFurPrice;
             
-            this.resources.gold += goldEarned;
-            this.resources.processedFur -= processedFurToSell;
+            this.resourceManager.modifyResourceAmount('gold', goldEarned);
+            this.resourceManager.modifyResourceAmount('processedFur', -processedFurToSell);
             
             this.updateDisplay();
         }
@@ -658,65 +679,70 @@ class EconomicGame {
             iron: 'железа',
             coal: 'угля',
             fur: 'шкуры',
-            processedFur: 'обработанной шкуры'
+            processedFur: 'обработанной шкуры',
+            silver: 'серебра'
         };
         return resourceNames[resourceType] || resourceType;
     }
 
     updateWheatPrice() {
         // Reset price multiplier
-        this.marketRates.wheat = 0.1;  // Base rate
+        this.resourceManager.resourceConfigs['wheat'].marketRate = 0.1;  // Base rate
 
         // Apply price reduction based on total wheat sold
-        for (let threshold of this.wheatPriceThresholds) {
-            if (this.marketStats.totalWheatSold >= threshold.threshold) {
-                this.marketRates.wheat *= threshold.multiplier;
+        for (let threshold of this.resourceManager.resourceConfigs['wheat'].priceThresholds) {
+            if (this.resourceManager.totalResourcesSold['wheat'] >= threshold.threshold) {
+                this.resourceManager.resourceConfigs['wheat'].marketRate *= threshold.multiplier;
             }
         }
 
         // Ensure the price doesn't go below a minimum threshold
-        this.marketRates.wheat = Math.max(this.marketRates.wheat, 0.01);
+        this.resourceManager.resourceConfigs['wheat'].marketRate = Math.max(this.resourceManager.resourceConfigs['wheat'].marketRate, 0.01);
     }
 
     updateDisplay() {
         // Update global stats
-        document.getElementById('goldAmount').textContent = this.resources.gold.toFixed(1);
-        document.getElementById('foodAmount').textContent = this.resources.food.toFixed(1);
+        document.getElementById('goldAmount').textContent = this.resourceManager.getResourceAmount('gold').toFixed(1);
+        document.getElementById('foodAmount').textContent = this.resourceManager.getResourceAmount('food').toFixed(1);
 
         // Resource amounts
-        document.getElementById('wheatAmount').textContent = this.resources.wheat.toFixed(1);
-        document.getElementById('woodAmount').textContent = this.resources.wood.toFixed(1);
-        document.getElementById('stoneAmount').textContent = this.resources.stone.toFixed(1);
-        document.getElementById('ironAmount').textContent = this.resources.iron.toFixed(1);
-        document.getElementById('coalAmount').textContent = this.resources.coal.toFixed(1);
-        document.getElementById('furAmount').textContent = this.resources.fur.toFixed(1);
-        document.getElementById('processedFurAmount').textContent = this.resources.processedFur.toFixed(1);
+        document.getElementById('wheatAmount').textContent = this.resourceManager.getResourceAmount('wheat').toFixed(1);
+        document.getElementById('woodAmount').textContent = this.resourceManager.getResourceAmount('wood').toFixed(1);
+        document.getElementById('stoneAmount').textContent = this.resourceManager.getResourceAmount('stone').toFixed(1);
+        document.getElementById('ironAmount').textContent = this.resourceManager.getResourceAmount('iron').toFixed(1);
+        document.getElementById('coalAmount').textContent = this.resourceManager.getResourceAmount('coal').toFixed(1);
+        document.getElementById('furAmount').textContent = this.resourceManager.getResourceAmount('fur').toFixed(1);
+        document.getElementById('processedFurAmount').textContent = this.resourceManager.getResourceAmount('processedFur').toFixed(1);
+
+        document.getElementById('silverAmount').textContent = this.resourceManager.getResourceAmount('silver').toFixed(1);
+        document.getElementById('sellSilverAmount').textContent = this.resourceManager.getResourceAmount('silver').toFixed(1);
+        document.getElementById('silverPricePerUnit').textContent = this.resourceManager.resourceConfigs['silver'].marketRate.toFixed(2);
 
         // Labor display
         document.getElementById('availableLaborCount').textContent = this.labor.available;
 
         // Selling amounts
-        document.getElementById('sellWheatAmount').textContent = this.resources.wheat.toFixed(1);
-        document.getElementById('sellWoodAmount').textContent = this.resources.wood.toFixed(1);
-        document.getElementById('sellStoneAmount').textContent = this.resources.stone.toFixed(1);
-        document.getElementById('sellIronAmount').textContent = this.resources.iron.toFixed(1);
-        document.getElementById('sellCoalAmount').textContent = this.resources.coal.toFixed(1);
-        document.getElementById('sellFurAmount').textContent = this.resources.fur.toFixed(1);
-        document.getElementById('sellProcessedFurAmount').textContent = this.resources.processedFur.toFixed(1);
+        document.getElementById('sellWheatAmount').textContent = this.resourceManager.getResourceAmount('wheat').toFixed(1);
+        document.getElementById('sellWoodAmount').textContent = this.resourceManager.getResourceAmount('wood').toFixed(1);
+        document.getElementById('sellStoneAmount').textContent = this.resourceManager.getResourceAmount('stone').toFixed(1);
+        document.getElementById('sellIronAmount').textContent = this.resourceManager.getResourceAmount('iron').toFixed(1);
+        document.getElementById('sellCoalAmount').textContent = this.resourceManager.getResourceAmount('coal').toFixed(1);
+        document.getElementById('sellFurAmount').textContent = this.resourceManager.getResourceAmount('fur').toFixed(1);
+        document.getElementById('sellProcessedFurAmount').textContent = this.resourceManager.getResourceAmount('processedFur').toFixed(1);
         
         // Per-unit prices
-        document.getElementById('wheatPricePerUnit').textContent = this.marketRates.wheat.toFixed(2);
-        document.getElementById('woodPricePerUnit').textContent = this.marketRates.wood.toFixed(2);
-        document.getElementById('stonePricePerUnit').textContent = this.marketRates.stone.toFixed(2);
-        document.getElementById('ironPricePerUnit').textContent = this.marketRates.iron.toFixed(2);
-        document.getElementById('coalPricePerUnit').textContent = this.marketRates.coal.toFixed(2);
-        document.getElementById('furPricePerUnit').textContent = this.marketRates.fur.toFixed(2);
-        document.getElementById('processedFurPricePerUnit').textContent = this.marketRates.processedFur.toFixed(2);
+        document.getElementById('wheatPricePerUnit').textContent = this.resourceManager.resourceConfigs['wheat'].marketRate.toFixed(2);
+        document.getElementById('woodPricePerUnit').textContent = this.resourceManager.resourceConfigs['wood'].marketRate.toFixed(2);
+        document.getElementById('stonePricePerUnit').textContent = this.resourceManager.resourceConfigs['stone'].marketRate.toFixed(2);
+        document.getElementById('ironPricePerUnit').textContent = this.resourceManager.resourceConfigs['iron'].marketRate.toFixed(2);
+        document.getElementById('coalPricePerUnit').textContent = this.resourceManager.resourceConfigs['coal'].marketRate.toFixed(2);
+        document.getElementById('furPricePerUnit').textContent = this.resourceManager.resourceConfigs['fur'].marketRate.toFixed(2);
+        document.getElementById('processedFurPricePerUnit').textContent = this.resourceManager.resourceConfigs['processedFur'].marketRate.toFixed(2);
 
         // Update market rates (if these elements exist)
         const wheatRateElement = document.getElementById('wheatRateDescription');
         if (wheatRateElement) {
-            const wheatPerGold = (1 / this.marketRates.wheat).toFixed(2);
+            const wheatPerGold = (1 / this.resourceManager.resourceConfigs['wheat'].marketRate).toFixed(2);
             wheatRateElement.textContent = `${wheatPerGold} пшена = 1 золото`;
         }
 
@@ -725,8 +751,8 @@ class EconomicGame {
     }
 
     checkFoodDepletion() {
-        if (this.resources.food <= 0) {
-            this.resources.food = 0;
+        if (this.resourceManager.getResourceAmount('food') <= 0) {
+            this.resourceManager.modifyResourceAmount('food', 0);
             this.sendWorkersToWaiting();
         }
     }
@@ -756,13 +782,17 @@ class EconomicGame {
         while (this.coalMines.length > 0) {
             this.removeCoalMine(this.coalMines[0].id);
         }
+        // Silver mines
+        while (this.silverMines.length > 0) {
+            this.removeSilverMine(this.silverMines[0].id);
+        }
     }
 
     updateResourceDisplay() {
         // Обновляем основные ресурсы
         const resources = [
             'gold', 'wheat', 'food', 'wood', 
-            'stone', 'iron', 'coal', 'fur', 'processedFur'
+            'stone', 'iron', 'coal', 'fur', 'processedFur', 'silver'
         ];
 
         resources.forEach(resource => {
@@ -770,7 +800,7 @@ class EconomicGame {
             const changeElement = document.getElementById(`${resource}Change`);
 
             if (amountElement && changeElement) {
-                const currentAmount = this.resources[resource];
+                const currentAmount = this.resourceManager.getResourceAmount(resource);
                 const previousAmount = this.previousResources[resource] || 0;
                 const change = currentAmount - previousAmount;
 
@@ -787,7 +817,233 @@ class EconomicGame {
         });
 
         // Сохраняем текущие значения для следующего сравнения
-        this.previousResources = {...this.resources};
+        this.previousResources = {};
+        resources.forEach(resource => {
+            this.previousResources[resource] = this.resourceManager.getResourceAmount(resource);
+        });
+    }
+
+    createGoldMine() {
+        if (this.labor.available > 0 && 
+            this.resourceManager.canAfford('food', 2) && 
+            this.resourceManager.canAfford('wood', 3) && 
+            this.resourceManager.canAfford('coal', 5)) {
+            
+            const goldMineId = this.goldMines.length + 1;
+            
+            // Вычитаем ресурсы
+            this.resourceManager.modifyResourceAmount('food', -2);
+            this.resourceManager.modifyResourceAmount('wood', -3);
+            this.resourceManager.modifyResourceAmount('coal', -5);
+            this.labor.available--;
+
+            // Создаем золотую шахту
+            this.goldMines.push({
+                id: goldMineId,
+                productivity: 0.1  // 0.1 золота в секунду
+            });
+
+            // Обновляем интерфейс
+            this.updateGoldMineDisplay();
+            this.updateDisplay();
+        } else {
+            alert('Недостаточно ресурсов или рабочих для создания золотой шахты!');
+        }
+    }
+
+    updateGoldMineDisplay() {
+        const container = document.getElementById('goldMineContainer');
+        container.innerHTML = ''; // Очистка существующих записей
+
+        this.goldMines.forEach(mine => {
+            const mineElement = document.createElement('div');
+            mineElement.innerHTML = `
+                Золотая шахта #${mine.id} 
+                <button onclick="game.removeGoldMine(${mine.id})">Закрыть</button>
+            `;
+            container.appendChild(mineElement);
+        });
+    }
+
+    removeGoldMine(mineId) {
+        const index = this.goldMines.findIndex(mine => mine.id === mineId);
+        if (index !== -1) {
+            this.goldMines.splice(index, 1);
+            this.labor.available++;
+            this.updateGoldMineDisplay();
+            this.updateDisplay();
+        }
+    }
+
+    generateGoldResources() {
+        const upgrade = this.upgrades.laborEfficiency;
+        this.goldMines.forEach(mine => {
+            // Проверяем, достаточно ли ресурсов для работы шахты
+            if (this.resourceManager.canAfford('food', 2) && this.resourceManager.canAfford('wood', 3) && this.resourceManager.canAfford('coal', 5)) {
+                // Вычитаем ресурсы
+                this.resourceManager.modifyResourceAmount('food', -2);
+                this.resourceManager.modifyResourceAmount('wood', -3);
+                this.resourceManager.modifyResourceAmount('coal', -5);
+                // Добавляем золото с учётом множителя
+                const production = mine.productivity * upgrade.productionMultiplier;
+                this.resourceManager.modifyResourceAmount('gold', production);
+            } else {
+                console.log('Недостаточно ресурсов для работы золотой шахты');
+            }
+        });
+    }
+}
+
+class ResourceManager {
+    constructor() {
+        // Configuration for all resources
+        this.resourceConfigs = {
+            gold: { 
+                initialAmount: 100, 
+                isMarketable: true,
+                marketRate: 1 
+            },
+            wheat: { 
+                initialAmount: 11110, 
+                isMarketable: true,
+                marketRate: 0.1,
+                priceThresholds: [
+                    { threshold: 1000, multiplier: 0.2 },
+                    { threshold: 5000, multiplier: 0.1 },
+                    { threshold: 10000, multiplier: 0.05 }
+                ]
+            },
+            wood: { 
+                initialAmount: 0, 
+                isMarketable: true,
+                marketRate: 0.2 
+            },
+            stone: { 
+                initialAmount: 0, 
+                isMarketable: true,
+                marketRate: 5 
+            },
+            iron: { 
+                initialAmount: 0, 
+                isMarketable: true,
+                marketRate: 10 
+            },
+            coal: { 
+                initialAmount: 0, 
+                isMarketable: true,
+                marketRate: 15 
+            },
+            fur: { 
+                initialAmount: 0, 
+                isMarketable: true,
+                marketRate: 0.3,
+                processedVersion: 'processedFur'
+            },
+            processedFur: { 
+                initialAmount: 0, 
+                isMarketable: true,
+                marketRate: 15,
+                rawVersion: 'fur'
+            },
+            food: { 
+                initialAmount: 0, 
+                isMarketable: false 
+            },
+            silver: { 
+                initialAmount: 0, 
+                isMarketable: true,
+                marketRate: 20 
+            }
+        };
+
+        // Dynamic resources tracking
+        this.resources = {};
+        this.totalResourcesSold = {};
+        this.resourcePriceMultipliers = {};
+
+        this.initializeResources();
+    }
+
+    initializeResources() {
+        Object.keys(this.resourceConfigs).forEach(resourceName => {
+            const config = this.resourceConfigs[resourceName];
+            this.resources[resourceName] = config.initialAmount;
+            this.totalResourcesSold[resourceName] = 0;
+            this.resourcePriceMultipliers[resourceName] = 1;
+        });
+    }
+
+    addResource(resourceName, config) {
+        if (!this.resourceConfigs[resourceName]) {
+            this.resourceConfigs[resourceName] = config;
+            this.resources[resourceName] = config.initialAmount || 0;
+            this.totalResourcesSold[resourceName] = 0;
+            this.resourcePriceMultipliers[resourceName] = 1;
+        }
+    }
+
+    getResourceAmount(resourceName) {
+        return this.resources[resourceName] || 0;
+    }
+
+    modifyResourceAmount(resourceName, amount) {
+        if (this.resources.hasOwnProperty(resourceName)) {
+            this.resources[resourceName] += amount;
+            return true;
+        }
+        return false;
+    }
+
+    canAfford(resourceName, amount) {
+        return this.resources[resourceName] >= amount;
+    }
+
+    sellResource(resourceName, amount) {
+        const config = this.resourceConfigs[resourceName];
+        if (!config || !config.isMarketable) return 0;
+
+        if (this.resources[resourceName] >= amount) {
+            const priceMultiplier = this.calculatePriceMultiplier(resourceName, amount);
+            const goldEarned = amount * config.marketRate * priceMultiplier;
+
+            this.resources[resourceName] -= amount;
+            this.resources['gold'] += goldEarned;
+            this.totalResourcesSold[resourceName] += amount;
+
+            return goldEarned;
+        }
+        return 0;
+    }
+
+    calculatePriceMultiplier(resourceName, amount) {
+        const config = this.resourceConfigs[resourceName];
+        if (config.priceThresholds) {
+            const totalSold = this.totalResourcesSold[resourceName];
+            const thresholds = config.priceThresholds;
+            
+            for (let threshold of thresholds) {
+                if (totalSold >= threshold.threshold) {
+                    return threshold.multiplier;
+                }
+            }
+        }
+        return 1;
+    }
+
+    processResource(rawResourceName, processedResourceName) {
+        const rawConfig = this.resourceConfigs[rawResourceName];
+        const processedConfig = this.resourceConfigs[processedResourceName];
+
+        if (rawConfig && processedConfig && rawConfig.processedVersion === processedResourceName) {
+            // Simple 1:1 processing for now, can be made more complex
+            const processAmount = Math.min(this.resources[rawResourceName], 10);
+            
+            this.resources[rawResourceName] -= processAmount;
+            this.resources[processedResourceName] += processAmount;
+
+            return processAmount;
+        }
+        return 0;
     }
 }
 

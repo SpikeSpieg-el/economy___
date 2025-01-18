@@ -33,19 +33,9 @@
                     <h2>Ресурсы</h2>
                     <div id="resourceDisplay">
                         <div class="resource-item">
-                            <span><span class="resource-icon">💰</span> Золото</span>
-                            <span id="goldAmount">0</span>
-                            <span id="goldChange" class="resource-change"></span>
-                        </div>
-                        <div class="resource-item">
                             <span><span class="resource-icon">🌾</span> Пшено</span>
                             <span id="wheatAmount">0</span>
                             <span id="wheatChange" class="resource-change"></span>
-                        </div>
-                        <div class="resource-item">
-                            <span><span class="resource-icon">🍲</span> Еда</span>
-                            <span id="foodAmount">0</span>
-                            <span id="foodChange" class="resource-change"></span>
                         </div>
                         <div class="resource-item">
                             <span><span class="resource-icon">🌲</span> Дерево</span>
@@ -77,6 +67,12 @@
                             <span id="processedFurAmount">0</span>
                             <span id="processedFurChange" class="resource-change"></span>
                         </div>
+                        <div class="resource-item">
+                            <span><span class="resource-icon">🥈</span> Серебро</span>
+                            <span id="silverAmount">0</span>
+                            <span id="silverChange" class="resource-change"></span>
+                        </div>
+                        
                     </div>
                 </div>
 
@@ -108,6 +104,8 @@
                     </div>
                     <div id="productionContent" class="panel-content">
                         <div class="production-grid">
+
+                            
                             <div class="production-card">
                                 <h3>Охота</h3>
                                 <div class="production-details">
@@ -144,7 +142,17 @@
                                 <button id="createWoodcutterBtn">Создать лесозаготовку</button>
                                 <div id="woodcutterContainer" class="production-list"></div>
                             </div>
-
+                            <div class="production-card">
+                                <h3>Серебряная шахта</h3>
+                                <div class="production-details">
+                                    <p><span class="resource-icon">👥</span> Трудовые силы: 1</p>
+                                    <p><span class="resource-icon">🌲</span> Потребление дерева: 0.5/сек</p>
+                                    <p><span class="resource-icon">🪨</span> Потребление камня: 0.3/сек</p>
+                                    <p><span class="resource-icon">🥈</span> Производство: 0.2 серебра/сек</p>
+                                </div>
+                                <button id="createSilverMineBtn">Создать серебряную шахту</button>
+                                <div id="silverMineContainer" class="production-list"></div>
+                            </div>
                             <div class="production-card">
                                 <h3>Каменоломня</h3>
                                 <div class="production-details">
@@ -184,6 +192,19 @@
                                 <button id="createCoalMineBtn">Открыть угольную шахту</button>
                                 <div id="coalMineContainer" class="production-list"></div>
                             </div>
+
+                            <div class="production-card">
+                                <h3>Золотая шахта</h3>
+                                <div class="production-details">
+                                    <p><span class="resource-icon">👥</span> Трудовые силы: 1</p>
+                                    <p><span class="resource-icon">🍲</span> Потребление еды: 2/сек</p>
+                                    <p><span class="resource-icon">🌲</span> Потребление дерева: 3/сек</p>
+                                    <p><span class="resource-icon">⚒️</span> Потребление угля: 5/сек</p>
+                                    <p><span class="resource-icon">💰</span> Производство: 0.1 золота/сек</p>
+                                </div>
+                                <button id="createGoldMineBtn">Создать золотую шахту</button>
+                                <div id="goldMineContainer" class="production-list"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -202,6 +223,19 @@
                             </div>
                             <button id="sellWheatBtn">Продать</button>
                         </div>
+                        <div class="market-resource">
+                            <div class="resource-info">
+                                <span class="resource-icon">🥈</span>
+                                <span id="sellSilverAmount">0</span>
+                            </div>
+                            <div class="resource-price">
+                                <span>1 серебро = </span>
+                                <span id="silverPricePerUnit">20</span>
+                                <span>💰</span>
+                            </div>
+                            <button id="sellSilverBtn">Продать</button>
+                        </div>
+                        
                         <div class="market-resource">
                             <div class="resource-info">
                                 <span class="resource-icon">🌲</span>
@@ -289,7 +323,7 @@
                             <div class="upgrade-item" id="laborEfficiency1">
                                 <div class="upgrade-info">
                                     <h4>Уровень 1: Оптимизация питания</h4>
-                                    <p>Рабочие требуют на 10% меньше еды</p>
+                                    <p>Рабочие требуют на 35% меньше еды</p>
                                     <div class="upgrade-cost">
                                         <span class="resource-icon">🌾</span> 
                                         <span>20 пшена</span>
@@ -300,7 +334,7 @@
                             <div class="upgrade-item" id="laborEfficiency2">
                                 <div class="upgrade-info">
                                     <h4>Уровень 2: Полевые эксперты</h4>
-                                    <p>Рабочие на полях производят +5% ресурсов</p>
+                                    <p>Рабочие на полях производят +20% ресурсов</p>
                                     <div class="upgrade-cost">
                                         <span class="resource-icon">🌾</span> 
                                         <span>40 пшена</span>
@@ -311,7 +345,7 @@
                             <div class="upgrade-item" id="laborEfficiency3">
                                 <div class="upgrade-info">
                                     <h4>Уровень 3: Профессиональная подготовка</h4>
-                                    <p>Рабочие потребляют на 15% меньше еды</p>
+                                    <p>Рабочие производят +50% ресурсов</p>
                                     <div class="upgrade-cost">
                                         <span class="resource-icon">🌾</span> 
                                         <span>60 пшена</span>
@@ -322,7 +356,7 @@
                             <div class="upgrade-item" id="laborEfficiency4">
                                 <div class="upgrade-info">
                                     <h4>Уровень 4: Мастера производства</h4>
-                                    <p>Рабочие производят +10% ресурсов</p>
+                                    <p>Рабочие производят +45% ресурсов</p>
                                     <div class="upgrade-cost">
                                         <span class="resource-icon">🌾</span> 
                                         <span>80 пшена</span>
@@ -333,7 +367,7 @@
                             <div class="upgrade-item" id="laborEfficiency5">
                                 <div class="upgrade-info">
                                     <h4>Уровень 5: Научная организация труда</h4>
-                                    <p>Рабочие потребляют на 20% меньше еды и производят +15% ресурсов</p>
+                                    <p>Рабочие потребляют на 15% меньше еды и производят +25% ресурсов</p>
                                     <div class="upgrade-cost">
                                         <span class="resource-icon">🌾</span> 
                                         <span>100 пшена</span>
